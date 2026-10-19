@@ -1,6 +1,7 @@
 """Bounded yt-dlp wrapper for publicly accessible media URLs."""
 from __future__ import annotations
 
+import math
 import tempfile
 from pathlib import Path
 
@@ -15,24 +16,49 @@ class DownloadError(RuntimeError):
     """A download failed validation or could not be safely completed."""
 
 
+def _valid_size(value) -> bool:
+    """Accept only finite, non-negative integer or float sizes; reject bools."""
+    if isinstance(value, bool):
+        return False
+    if isinstance(value, int):
+        return value >= 0
+    if isinstance(value, float):
+        return math.isfinite(value) and value >= 0
+    return False
+
+
 def _enforce_download_limit(status: dict) -> None:
-    """Abort when yt-dlp reports a download larger than the upload limit."""
+    """Fail closed on malformed reported sizes or any size above the limit."""
+    if not isinstance(status, dict):
+        raise DownloadError("Invalid download progress metadata")
+
     for key in ("downloaded_bytes", "total_bytes", "total_bytes_estimate"):
         size = status.get(key)
-        if isinstance(size, (int, float)) and size > MAX_BYTES:
+        if size is None:
+            continue
+        if not _valid_size(size):
+            raise DownloadError("Invalid download size metadata")
+        if size > MAX_BYTES:
             raise DownloadError("File exceeds Telegram upload limit")
 
 
-def _size_filter(info: dict, *, incomplete: bool = False):
-    """Reject media whose known or estimated size exceeds the limit."""
-    size = info.get("filesize")
-    if not isinstance(size, (int, float)):
-        size = info.get("filesize_approx")
 
-    if isinstance(size, (int, float)) and size > MAX_BYTES:
-        return "File exceeds Telegram upload limit"
+def _size_filter(info: dict, *, incomplete: bool = False):
+    """Reject malformed or oversized known media-size metadata."""
+    if not isinstance(info, dict):
+        return "Invalid media metadata"
+
+    for key in ("filesize", "filesize_approx"):
+        size = info.get(key)
+        if size is None:
+            continue
+        if not _valid_size(size):
+            return "Invalid media size metadata"
+        if size > MAX_BYTES:
+            return "File exceeds Telegram upload limit"
 
     return None
+
 
 
 def _inside_root(path: Path, root: Path) -> bool:
@@ -96,7 +122,7 @@ def _find_output(info: dict, ydl, root: Path) -> Path:
     return unique_files[0]
 
 
-def download_media(url: str) -> tuple[tempfile.TemporaryDirectory, Path]:
+def download_media(url: str, audio_only: bool = False) -> tuple[tempfile.TemporaryDirectory, Path]:
     """Download public media into an isolated directory.
 
     The caller is responsible for calling cleanup() on the returned
@@ -128,6 +154,17 @@ def download_media(url: str) -> tuple[tempfile.TemporaryDirectory, Path]:
                 "temp": str(root),
             },
         }
+
+        if not audio_only:
+            opts["format"] = "bestvideo[ext=mp4][height<=1080]+bestaudio[ext=m4a]/best[ext=mp4][height<=1080]/best[ext=mp4]/best"
+            opts["merge_output_format"] = "mp4"
+
+        if audio_only:
+            opts["postprocessors"] = [{
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }]
 
         with yt_dlp.YoutubeDL(opts) as ydl:
             info = ydl.extract_info(url, download=True)

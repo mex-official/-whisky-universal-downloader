@@ -161,3 +161,43 @@ def test_final_file_size_is_checked(monkeypatch):
 
     with pytest.raises(downloader.DownloadError, match="exceeds"):
         downloader.download_media("https://example.com/video")
+
+
+@pytest.mark.parametrize(
+    "bad_size",
+    [True, -1, float("nan"), float("inf"), float("-inf"), "123"],
+)
+@pytest.mark.parametrize("field", ["filesize", "filesize_approx"])
+def test_size_metadata_rejects_invalid_values(field, bad_size):
+    assert downloader._size_filter({field: bad_size}) is not None
+
+
+@pytest.mark.parametrize(
+    ("field", "bad_size"),
+    [
+        ("downloaded_bytes", True),
+        ("downloaded_bytes", -1),
+        ("downloaded_bytes", float("nan")),
+        ("downloaded_bytes", float("inf")),
+        ("total_bytes", "123"),
+        ("total_bytes_estimate", -1),
+    ],
+)
+def test_progress_hook_rejects_invalid_size_metadata(field, bad_size):
+    with pytest.raises(downloader.DownloadError, match="Invalid download size"):
+        downloader._enforce_download_limit({field: bad_size})
+
+
+def test_progress_hook_rejects_non_dict_metadata():
+    with pytest.raises(downloader.DownloadError, match="Invalid download progress"):
+        downloader._enforce_download_limit(None)
+
+
+def test_size_metadata_accepts_exact_limit():
+    assert downloader._size_filter({"filesize": downloader.MAX_BYTES}) is None
+
+
+def test_size_metadata_rejects_oversized_exact_integer():
+    assert downloader._size_filter(
+        {"filesize": downloader.MAX_BYTES + 1}
+    ) == "File exceeds Telegram upload limit"
