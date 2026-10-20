@@ -1,6 +1,6 @@
 # Whisky Universal Downloader
 
-Standalone Telegram bot for publicly accessible media links from YouTube, Instagram, TikTok, X/Twitter, Pinterest and Reddit. It uses `yt-dlp`; support depends on upstream site behavior and does not imply every URL is downloadable.
+Standalone Telegram bot for publicly accessible media links from Facebook, TikTok, YouTube, Google Drive, Snapchat, Instagram, X/Twitter, Pinterest and Reddit. Audio-only mode can extract MP3 when FFmpeg is available. Support depends on upstream site behavior and does not imply every URL is downloadable. It uses `yt-dlp`; support depends on upstream site behavior and does not imply every URL is downloadable.
 
 ## Run locally
 

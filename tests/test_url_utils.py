@@ -4,6 +4,9 @@ from url_utils import is_valid_url
 @pytest.mark.parametrize("url", [
  "https://youtube.com/watch?v=abc", "https://www.youtube.com/shorts/abc", "https://youtu.be/abc",
  "https://www.instagram.com/reel/abc", "https://www.tiktok.com/@user/video/123",
+ "https://www.facebook.com/watch/?v=123", "https://fb.watch/abc123/",
+ "https://drive.google.com/file/d/abc123/view", "https://docs.google.com/document/d/abc123/",
+ "https://www.snapchat.com/spotlight/abc123", "https://music.youtube.com/watch?v=abc",
  "https://x.com/user/status/123", "https://twitter.com/user/status/123", "https://pin.it/abc",
  "https://www.pinterest.com/pin/123", "https://www.reddit.com/r/test/comments/abc/title",
  "https://redd.it/abc", "http://youtube.com/watch?v=abc",

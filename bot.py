@@ -198,7 +198,7 @@ async def menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if action == "menu:platforms":
         text = (
             "📡 المنصات التي يستهدفها المشروع:\n"
-            "YouTube، TikTok، Instagram، X/Twitter، Pinterest، Reddit.\n\n"
+            "Facebook، TikTok، YouTube، Google Drive، Snapchat، Instagram، X/Twitter، Pinterest، Reddit.\n\n"
             "الدعم الفعلي يختلف حسب الرابط وقيود المنصة؛ لا أضمن عمل كل رابط."
         )
     elif action == "menu:help":
@@ -226,7 +226,7 @@ async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
     if message:
         await message.reply_text(
-            "المنصات المستهدفة: YouTube، Instagram، TikTok، X/Twitter، "
+            "المنصات المستهدفة: Facebook، TikTok، YouTube، Google Drive، Snapchat، Instagram، X/Twitter، "
             "Pinterest، Reddit.\n"
             "أرسل /d ثم الرابط أو أرسل الرابط مباشرة. "
             "التنزيل يخضع لقيود المنصة وحد الملف (48 MiB). "

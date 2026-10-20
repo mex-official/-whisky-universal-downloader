@@ -201,3 +201,26 @@ def test_size_metadata_rejects_oversized_exact_integer():
     assert downloader._size_filter(
         {"filesize": downloader.MAX_BYTES + 1}
     ) == "File exceeds Telegram upload limit"
+
+
+def test_audio_only_configures_mp3_postprocessor(monkeypatch):
+    monkeypatch.setattr(downloader, "is_valid_url", lambda url: True)
+    captured = {}
+
+    class CapturingYDL(FakeYDL):
+        def __init__(self, opts, content=b"test media"):
+            captured.update(opts)
+            super().__init__(opts, content)
+
+    monkeypatch.setattr(downloader.yt_dlp, "YoutubeDL", CapturingYDL)
+    temp, path = downloader.download_media(
+        "https://www.youtube.com/watch?v=sample", audio_only=True
+    )
+    try:
+        assert captured["postprocessors"] == [{
+            "key": "FFmpegExtractAudio",
+            "preferredcodec": "mp3",
+            "preferredquality": "192",
+        }]
+    finally:
+        temp.cleanup()

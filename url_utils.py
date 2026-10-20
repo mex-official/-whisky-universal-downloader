@@ -24,8 +24,11 @@ ALLOWED_PLATFORMS = {
     "youtube": frozenset({
         "youtube.com", "youtu.be", "youtube-nocookie.com",
     }),
+    "facebook": frozenset({"facebook.com", "fb.com", "fb.watch"}),
     "tiktok": frozenset({"tiktok.com"}),
     "instagram": frozenset({"instagram.com", "instagr.am"}),
+    "google_drive": frozenset({"drive.google.com", "docs.google.com"}),
+    "snapchat": frozenset({"snapchat.com"}),
     "twitter": frozenset({"twitter.com", "x.com"}),
     "pinterest": frozenset({"pinterest.com", "pin.it"}),
     "reddit": frozenset({"reddit.com", "redd.it"}),
