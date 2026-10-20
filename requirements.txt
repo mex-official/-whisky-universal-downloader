@@ -1,3 +1,7 @@
-python-telegram-bot>=21.6,<23
-yt-dlp[default]>=2025.1.15
-python-dotenv>=1.0,<2
+
+# Whisky Universal Downloader
+# Runtime dependencies — validated version ranges
+
+python-telegram-bot>=22.8,<23.0
+yt-dlp[default]>=2026.8.19,<2028.0
+python-dotenv>=1.2.3,<2.0

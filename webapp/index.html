@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07111f">
+<title>WHISKY // CORE</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#07111f;--panel:#0d1b2d;--line:#18344b;--cyan:#35e0ff;--muted:#8da8bd;--text:#edfaff}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% -15%,#123e59 0,transparent 48%),var(--bg);color:var(--text);font:15px system-ui,-apple-system,sans-serif;min-height:100vh}
+main{max-width:540px;margin:auto;padding:24px 18px 34px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:34px}
+.brand{font-size:12px;letter-spacing:3px;color:var(--cyan);font-weight:800}
+.status{font-size:10px;color:#85f6c5;border:1px solid #245b52;border-radius:20px;padding:6px 9px}
+h1{font-size:35px;line-height:1.05;letter-spacing:-1.5px;margin:0 0 12px}
+h1 span{color:var(--cyan)}
+.sub{color:var(--muted);line-height:1.6;margin:0 0 25px}
+.panel{background:linear-gradient(145deg,#10243a,#0a1727);border:1px solid var(--line);border-radius:20px;padding:19px;margin:16px 0}
+.label{font-size:10px;letter-spacing:2px;color:var(--cyan);font-weight:800;margin-bottom:13px}
+textarea{width:100%;min-height:112px;resize:vertical;background:#071321;border:1px solid #23445b;border-radius:12px;color:var(--text);padding:14px;font:14px system-ui;outline:none}
+textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 2px #35e0ff1c}
+button{width:100%;border:0;border-radius:12px;padding:15px;font-size:14px;font-weight:800;cursor:pointer}
+.primary{margin-top:12px;background:linear-gradient(90deg,#35e0ff,#8bf4ff);color:#04111c}
+.secondary{background:#10263a;color:var(--text);border:1px solid #24435b}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.tile{border:1px solid var(--line);background:#0b1929;border-radius:14px;padding:15px}
+.tile strong{display:block;font-size:13px;margin-bottom:6px}
+.tile small{display:block;color:var(--muted);font-size:11px;line-height:1.5}
+.note{color:var(--muted);font-size:11px;line-height:1.6;margin:13px 2px}
+footer{text-align:center;color:#58768d;font-size:10px;letter-spacing:2px;margin-top:28px}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <div class="brand">WHISKY <span>// CORE</span></div>
+    <div class="status">● INTERFACE READY</div>
+  </div>
+
+  <h1>UNIVERSAL<br><span>MEDIA ENGINE</span></h1>
+  <p class="sub">A unified interface for your public media links. Submit a supported URL to continue in the bot.</p>
+
+  <section class="panel">
+    <div class="label">01 / SOURCE INPUT</div>
+    <textarea id="url" placeholder="Paste a public media URL here…" maxlength="4096" autocomplete="off" spellcheck="false"></textarea>
+    <button class="primary" id="submit">CONTINUE TO BOT ↗</button>
+    <p class="note">Use only public links you are authorized to access. Availability depends on the source platform and bot configuration.</p>
+  </section>
+
+  <div class="label">02 / SYSTEM MODULES</div>
+  <div class="grid">
+    <div class="tile"><strong>LINK INPUT</strong><small>Prepare a URL for validation by the bot.</small></div>
+    <div class="tile"><strong>JOB CONTROL</strong><small>Submit requests through the Telegram conversation.</small></div>
+    <div class="tile"><strong>SAFE LIMITS</strong><small>Download and size limits remain controlled by the bot.</small></div>
+    <div class="tile"><strong>STATUS</strong><small>This screen does not claim a download has started.</small></div>
+  </div>
+
+  <footer>WHISKY UNIVERSAL DOWNLOADER · CORE UI</footer>
+</main>
+<script>
+(function(){
+  const tg=window.Telegram&&window.Telegram.WebApp;
+  if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('#07111f');tg.setBackgroundColor('#07111f')}catch(e){}}
+  const field=document.getElementById('url');
+  document.getElementById('submit').addEventListener('click',function(){
+    const value=field.value.trim();
+    let parsed;
+    try{parsed=new URL(value)}catch(e){
+      alert('Enter a valid URL beginning with https://');
+      return;
+    }
+    if(parsed.protocol!=='https:'&&parsed.protocol!=='http:'){
+      alert('Only HTTP and HTTPS links are accepted.');
+      return;
+    }
+    if(!parsed.hostname.includes('.')||parsed.hostname==='localhost'){
+      alert('Enter a public website URL.');
+      return;
+    }
+    if(tg&&tg.initData){
+      tg.sendData(JSON.stringify({type:'media_url',url:value}));
+      return;
+    }
+    const text='/d '+value;
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(
+        ()=>alert('Command copied. Open your Telegram bot and paste it into the chat.'),
+        ()=>alert('Open your Telegram bot and send this command:\n'+text)
+      );
+    }else{
+      alert('Open your Telegram bot and send this command:\n'+text);
+    }
+  });
+})();
+</script>
+</body>
+</html>
