@@ -16,7 +16,7 @@ from telegram.ext import (
 )
 
 from telegram import BotCommand
-from downloader import download_media
+from downloader import download_media, search_music_url
 from job_gate import JobGate
 from rate_limiter import RateLimiter
 from url_utils import is_valid_url
@@ -143,12 +143,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
     if message:
         await message.reply_text(
-            "🥃 <b>WHISKY UNIVERSAL DOWNLOADER</b>\\n"
-            "━━━━━━━━━━━━━━━━━━\\n\\n"
-            "مرحبًا بك في مركز التنزيلات\\n\\n"
-            "📥 أرسل رابط المحتوى المدعوم لبدء التنزيل.\\n"
-            "🎵 يمكنك تفعيل وضع الصوت من الإعدادات.\\n"
-            "🛡️ استخدم الروابط التي تملك حق الوصول إليها.\\n\\n"
+            "🥃 <b>WHISKY UNIVERSAL DOWNLOADER</b>\n"
+            "━━━━━━━━━━━━━━━━━━\n\n"
+            "مرحبًا بك في مركز التنزيلات\n\n"
+            "📥 أرسل رابط المحتوى المدعوم لبدء التنزيل.\n"
+            "🎵 يمكنك تفعيل وضع الصوت من الإعدادات.\n"
+            "🛡️ استخدم الروابط التي تملك حق الوصول إليها.\n\n"
             "اختر الخدمة المطلوبة من القائمة أدناه.",
             parse_mode="HTML",
             reply_markup=menu_keyboard(),
@@ -279,14 +279,21 @@ async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if not is_valid_url(url, resolve_dns=False):
-        await message.reply_text(
-            "أرسل رابطًا عامًا صالحًا من منصة مدعومة باستخدام HTTP أو HTTPS."
-        )
-        return
+        search_msg = await message.reply_text("🎵 أبحث عن الأغنية…")
+        try:
+            result_url = await asyncio.to_thread(search_music_url, url)
+        except Exception as exc:
+            logging.warning("Music search failed: %s", exc)
+            result_url = None
+        if not result_url or not is_valid_url(result_url, resolve_dns=False):
+            await search_msg.edit_text("لم أعثر على رابط قابل للتنزيل. جرّب اسم الأغنية والفنان.")
+            return
+        url = result_url
+        await search_msg.delete()
 
     status = await message.reply_text(
-        "🥃 <b>WHISKY • مركز التنزيل</b>\\n"
-        "━━━━━━━━━━━━━━━━━━\\n"
+        "🥃 <b>WHISKY • مركز التنزيل</b>\n"
+        "━━━━━━━━━━━━━━━━━━\n"
         "🔎 <b>المرحلة 1/3:</b> فحص الرابط وتجهيز المهمة…",
         parse_mode="HTML",
     )
@@ -339,9 +346,9 @@ async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # Download capacity is released before waiting for Telegram upload.
         await status.edit_text(
-            "🥃 <b>WHISKY • مركز التنزيل</b>\\n"
-            "━━━━━━━━━━━━━━━━━━\\n"
-            "✅ <b>المرحلة 2/3:</b> اكتمل تنزيل الملف.\\n"
+            "🥃 <b>WHISKY • مركز التنزيل</b>\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            "✅ <b>المرحلة 2/3:</b> اكتمل تنزيل الملف.\n"
             "📤 <b>المرحلة 3/3:</b> جارٍ رفعه إلى تيليجرام…",
         )
         async with upload_semaphore:
@@ -376,7 +383,7 @@ async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         try:
             await status.edit_text(
-                "✨ <b>اكتملت المهمة بنجاح</b>\\n"
+                "✨ <b>اكتملت المهمة بنجاح</b>\n"
                 "تم تنزيل الملف ورفعه إلى تيليجرام.",
             )
         except Exception:
@@ -386,9 +393,9 @@ async def download(update: Update, context: ContextTypes.DEFAULT_TYPE):
         log.warning("Download failed (%s)", type(exc).__name__)
         try:
             await status.edit_text(
-                "⚠️ <b>تعذر التنزيل أو الرفع</b>\\n"
+                "⚠️ <b>تعذر التنزيل أو الرفع</b>\n"
                 "قد يكون الرابط خاصًا أو غير مدعوم، أو تجاوز حد الحجم، "
-                "أو أن المصدر غير متاح حاليًا.\\n"
+                "أو أن المصدر غير متاح حاليًا.\n"
                 "تحقق من الرابط وحاول مرة أخرى.",
             )
         except Exception:
@@ -416,15 +423,15 @@ async def platforms_cmd(
         return
 
     await message.reply_text(
-        "🔷 WHISKY / SUPPORTED PLATFORMS\\n"
-        "━━━━━━━━━━━━━━━━━━\\n"
-        "• YouTube\\n"
-        "• TikTok\\n"
-        "• Instagram\\n"
-        "• X / Twitter\\n"
-        "• Pinterest\\n"
-        "• Reddit\\n\\n"
-        "أرسل رابطًا عامًا مدعومًا أو استخدم /d متبوعًا بالرابط.\\n"
+        "🔷 WHISKY / SUPPORTED PLATFORMS\n"
+        "━━━━━━━━━━━━━━━━━━\n"
+        "• YouTube\n"
+        "• TikTok\n"
+        "• Instagram\n"
+        "• X / Twitter\n"
+        "• Pinterest\n"
+        "• Reddit\n\n"
+        "أرسل رابطًا عامًا مدعومًا أو استخدم /d متبوعًا بالرابط.\n"
         "التوفر الفعلي يعتمد على الرابط وقيود المنصة."
     )
 
@@ -437,10 +444,10 @@ async def ping_cmd(
         return
 
     await message.reply_text(
-        "🔷 WHISKY / BOT STATUS\\n"
-        "━━━━━━━━━━━━━━━━━━\\n"
-        "الحالة: يستجيب للأوامر\\n"
-        "فحص الاتصال بتيليجرام: نجح وصول هذا الأمر\\n"
+        "🔷 WHISKY / BOT STATUS\n"
+        "━━━━━━━━━━━━━━━━━━\n"
+        "الحالة: يستجيب للأوامر\n"
+        "فحص الاتصال بتيليجرام: نجح وصول هذا الأمر\n"
         "ملاحظة: هذا ليس فحصًا لمصادر التنزيل الخارجية."
     )
 
@@ -454,7 +461,7 @@ async def id_cmd(
         return
 
     await message.reply_text(
-        f"🔷 Chat ID: {chat.id}\\n"
+        f"🔷 Chat ID: {chat.id}\n"
         f"النوع: {chat.type}"
     )
 

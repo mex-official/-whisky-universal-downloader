@@ -9,9 +9,7 @@ import yt_dlp
 
 from url_utils import is_valid_url
 
-MAX_BYTES = 48 * 1024 * 1024
-
-
+MAX_BYTES = 100 * 1024 * 1024
 class DownloadError(RuntimeError):
     """A download failed validation or could not be safely completed."""
 
@@ -184,3 +182,35 @@ def download_media(url: str, audio_only: bool = False) -> tuple[tempfile.Tempora
     except Exception:
         temp.cleanup()
         raise
+
+
+def search_music_url(query: str) -> str:
+    """Resolve a short music title/artist query to the first YouTube result."""
+    query = " ".join(str(query).split()).strip()
+    if not query or len(query) > 200:
+        raise DownloadError("أدخل اسم أغنية أو فنانًا بطول لا يتجاوز 200 حرف.")
+
+    opts = {
+        "quiet": True,
+        "no_warnings": True,
+        "skip_download": True,
+        "extract_flat": True,
+        "noplaylist": True,
+        "playlistend": 1,
+        "socket_timeout": 15,
+    }
+    with yt_dlp.YoutubeDL(opts) as ydl:
+        result = ydl.extract_info("ytsearch1:" + query, download=False)
+
+    entries = result.get("entries") or []
+    if not entries or not isinstance(entries[0], dict):
+        raise DownloadError("لم أعثر على نتيجة مناسبة. جرّب اسم الأغنية والفنان.")
+
+    item = entries[0]
+    video_id = item.get("id")
+    webpage_url = item.get("webpage_url")
+    if video_id and str(video_id).replace("-", "").replace("_", "").isalnum():
+        return "https://www.youtube.com/watch?v=" + str(video_id)
+    if isinstance(webpage_url, str) and webpage_url.startswith("https://www.youtube.com/watch?v="):
+        return webpage_url
+    raise DownloadError("تعذّر التحقق من رابط نتيجة البحث.")
